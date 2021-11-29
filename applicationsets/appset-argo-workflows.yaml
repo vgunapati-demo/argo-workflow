@@ -1,0 +1,51 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+ name: argo-workflow
+spec:
+ generators:
+ - list:
+     elements:
+     - cluster: vcluster-1
+       url: ""
+       values:
+         path: "argo-workflow/3.2.4"
+     - cluster: vcluster-2
+       url: ""
+       values:
+         path: "argo-workflow/3.2.0"
+ template:
+   metadata:
+     name: 'argo-workflow-{{cluster}}'
+     labels:
+       appset: argo-workflow
+   spec:
+     project: argo-workflow
+     source:
+       helm:
+         fileParameters:
+         - path: values.yaml
+       repoURL: https://github.com/vgunapati-demo/argo-workflow.git
+       targetRevision: HEAD
+       path: '{{values.path}}'
+     destination:
+       name: '{{cluster}}'
+       namespace: workflow
+     # Sync policy
+     syncPolicy:
+       automated: # automated sync by default retries failed attempts 5 times with following delays between attempts ( 5s, 10s, 20s, 40s, 80s ); retry controlled using `retry` field.
+         prune: true # Specifies if resources should be pruned during auto-syncing ( false by default ).
+         selfHeal: true # Specifies if partial app sync should be executed when resources are changed only in target Kubernetes cluster and no git change detected ( false by default ).
+         allowEmpty: false # Allows deleting all application resources during automatic syncing ( false by default ).
+       syncOptions:     # Sync options which modifies sync behavior
+       - Validate=true # disables resource validation (equivalent to 'kubectl apply --validate=false') ( true by default ).
+       - PrunePropagationPolicy=foreground # Supported policies are background, foreground and orphan.
+       - CreateNamespace=true # Namespace Auto-Creation ensures that namespace specified as the application destination exists in the destination cluster.
+       - PruneLast=true # Allow the ability for resource pruning to happen as a final, implicit wave of a sync operation
+       # The retry feature is available since v1.7
+       retry:
+         limit: 2 # number of failed sync attempt retries; unlimited number of attempts if less than 0
+         backoff:
+           duration: 5s # the amount to back off. Default unit is seconds, but could also be a duration (e.g. "2m", "1h")
+           factor: 2 # a factor to multiply the base duration after each failed retry
+           maxDuration: 3m # the maximum amount of time allowed for the backoff strategy
