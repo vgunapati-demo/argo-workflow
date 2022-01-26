@@ -7,7 +7,7 @@ spec:
     # merge 'parent' generator
     - merge:
         mergeKeys:
-          - server
+          - name
         generators:
           - clusters:
              selector:
