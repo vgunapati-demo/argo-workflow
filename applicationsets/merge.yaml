@@ -25,7 +25,7 @@ spec:
           # For a specific cluster, enable Redis.
           - list:
               elements:
-              - cluster: vcluster-15
+              - name: vcluster-15
                 url: ""
                 values:
                   path: "argo-workflow/3.2.6"
